@@ -1,0 +1,40 @@
+name: merlin-timingdial-plugin-build
+
+on:
+  push:
+    paths:
+      - "timingdial/**"
+      - ".github/workflows/merlin-timingdial-plugin.yml"
+  workflow_dispatch:
+
+jobs:
+  job1:
+    name: plugin-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: "Set version env"
+        run: |
+          echo "PLUGIN_VER=$(echo `grep -wn "version="  /home/runner/work/merlin-timingdial/merlin-timingdial/timingdial/timingdial/timingdial.sh`|awk -F: '{print $2}'| sed s/"version="//g| sed  s/"\""//g )" >> $GITHUB_ENV
+
+      - name: "build_timingdial.tar.gz"
+        run: |
+          sudo apt-get update
+          cd /home/runner/work/merlin-timingdial/merlin-timingdial/
+          tar -czvf timingdial.tar.gz timingdial
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.PLUGIN_VER }}
+          name: version ${{ env.PLUGIN_VER }}
+          body: |
+            merlin-timingdial-plugin: version-${{ env.PLUGIN_VER }}
+          draft: false
+          prerelease: false
+          files: |
+            /home/runner/work/merlin-timingdial/merlin-timingdial/timingdial.tar.gz
